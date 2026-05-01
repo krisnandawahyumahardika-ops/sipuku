@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirGuard - Sipuku Monitoring</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --primary: #2563eb; --danger: #ef4444; --success: #22c55e; --bg: #f8fafc; }
+        body { font-family: sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 90%; max-width: 400px; text-align: center; }
+        .gauge { font-size: 3.5rem; font-weight: 800; margin: 1rem 0; transition: color 0.3s; }
+        .status-badge { display: inline-block; padding: 0.5rem 1rem; border-radius: 2rem; font-weight: 600; font-size: 0.8rem; margin-bottom: 2rem; }
+        .btn-notif { background: var(--primary); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.8rem; font-weight: 600; cursor: pointer; width: 100%; }
+        .safe { color: var(--success); } .safe-bg { background: #dcfce7; color: #166534; }
+        .warning { color: var(--danger); } .warning-bg { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sipuku System</h1>
+        <p>Monitoring Udara Real-time</p>
+        <div id="gauge-val" class="gauge">0</div>
+        <div id="status-text" class="status-badge safe-bg">MEMUAT DATA...</div>
+        <button class="btn-notif" onclick="mintaIzin()">🔔 Aktifkan Notifikasi Masker</button>
+        <div style="margin-top:20px; font-size:0.7rem; color:#94a3b8;">Project GrowNet • Krisnanda</div>
+    </div>
+
+    <script>
+        // GANTI URL DI BAWAH DENGAN URL DATABASE FIREBASE KAMU
+        const firebaseConfig = { databaseURL: "https://console.firebase.google.com/u/0/project/sipuku-krisnanda/database/sipuku-krisnanda-default-rtdb/data/~2F" };
+        firebase.initializeApp(firebaseConfig);
+        
+        const gaugeEl = document.getElementById('gauge-val');
+        const statusEl = document.getElementById('status-text');
+
+        function mintaIzin() {
+            Notification.requestPermission().then(perm => {
+                if(perm === "granted") alert("Notifikasi Aktif!");
+            });
+        }
+
+        firebase.database().ref('sensor/kualitas_udara').on('value', (snapshot) => {
+            const val = snapshot.val() || 0;
+            gaugeEl.innerText = val;
+
+            if (val > 2000) { 
+                gaugeEl.className = "gauge warning";
+                statusEl.innerText = "UDARA BURUK: PAKAI MASKER!";
+                statusEl.className = "status-badge warning-bg";
+                if (Notification.permission === "granted") {
+                    new Notification("⚠️ BAHAYA UDARA", { body: "Kualitas udara buruk (" + val + "). Segera pakai masker!" });
+                }
+            } else {
+                gaugeEl.className = "gauge safe";
+                statusEl.innerText = "KUALITAS UDARA BAIK";
+                statusEl.className = "status-badge safe-bg";
+            }
+        });
+    </script>
+</body>
+</html>
